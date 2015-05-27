@@ -386,6 +386,10 @@ namespace Dapper.Contrib.Extensions
             return deleted > 0;
         }
 
+        /// <summary>
+        /// Specifies a custom callback that detects the database type instead of relying on the default strategy (the name of the connection type object).
+        /// Please note that this callback is global and will be used by all the calls that require a database specific adapter.
+        /// </summary>
         public static GetDatabaseTypeDelegate GetDatabaseType;
 
         private static ISqlAdapter GetFormatter(IDbConnection connection)
