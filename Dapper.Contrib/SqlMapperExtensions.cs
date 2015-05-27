@@ -24,6 +24,8 @@ namespace Dapper.Contrib.Extensions
             bool IsDirty { get; set; }
         }
 
+        public delegate string GetDatabaseTypeDelegate(IDbConnection connection);
+
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> KeyProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> TypeProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> ComputedProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
@@ -384,11 +386,25 @@ namespace Dapper.Contrib.Extensions
             return deleted > 0;
         }
 
+        public static GetDatabaseTypeDelegate GetDatabaseType;
+
         private static ISqlAdapter GetFormatter(IDbConnection connection)
         {
-            var name = connection.GetType().Name.ToLower();
-            return !AdapterDictionary.ContainsKey(name) ? 
-                new SqlServerAdapter() : 
+            string name;
+            var getDatabaseType = GetDatabaseType;
+            if (getDatabaseType != null)
+            {
+                name = getDatabaseType(connection);
+                if (name != null)
+                    name = name.ToLower();
+            }
+            else
+            {
+                name = connection.GetType().Name.ToLower();
+            }
+
+            return !AdapterDictionary.ContainsKey(name) ?
+                new SqlServerAdapter() :
                 AdapterDictionary[name];
         }
 

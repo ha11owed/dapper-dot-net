@@ -199,6 +199,35 @@ namespace Dapper.Contrib.Tests
             }
         }
 
+        public void InsertWithCustomDbType()
+        {
+            SqlMapperExtensions.GetDatabaseType = (conn) => "SQLiteConnection";
+
+            bool sqliteCodeCalled = false;
+            using (var connection = GetOpenConnection())
+            {
+                connection.DeleteAll<User>();
+                connection.Get<User>(3).IsNull();
+                try
+                {
+                    var id = connection.Insert(new User { Name = "Adam", Age = 10 });
+                }
+                catch (SqlCeException ex)
+                {
+                    sqliteCodeCalled = ex.Message.IndexOf("last_insert_rowid", StringComparison.InvariantCultureIgnoreCase) >= 0;
+                }
+                catch (Exception)
+                {
+                }
+            }
+            SqlMapperExtensions.GetDatabaseType = null;
+
+            if (!sqliteCodeCalled)
+            {
+                throw new Exception("Was expecting sqlite code to be called");
+            }
+        }
+
         public void GetAll()
         {
             const int numberOfEntities = 100;
